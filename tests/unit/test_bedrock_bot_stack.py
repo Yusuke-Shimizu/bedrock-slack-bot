@@ -5,10 +5,10 @@ from bedrock_bot.bedrock_bot_stack import BedrockBotStack
 
 # example tests. To run these tests, uncomment this file along with the example
 # resource in bedrock_bot/bedrock_bot_stack.py
-def test_sqs_queue_created():
-    app = core.App()
-    stack = BedrockBotStack(app, "bedrock-bot")
-    template = assertions.Template.from_stack(stack)
+# def test_sqs_queue_created():
+#     app = core.App()
+#     stack = BedrockBotStack(app, "bedrock-bot")
+#     template = assertions.Template.from_stack(stack)
 
 #     template.has_resource_properties("AWS::SQS::Queue", {
 #         "VisibilityTimeout": 300
