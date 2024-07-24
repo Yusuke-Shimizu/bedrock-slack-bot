@@ -7,6 +7,7 @@ from aws_cdk import (
     aws_lambda_event_sources as lambda_event_sources,
     aws_lambda as lambda_,
     aws_iam as iam,
+    aws_ssm as ssm,
     Aws,
 )
 from constructs import Construct
@@ -25,6 +26,20 @@ class BedrockBotStack(Stack):
                 300
             ),  # メッセージの可視性タイムアウトを設定
         )
+        # SSMパラメータストアの作成
+        access_token_param = ssm.StringParameter(
+            self,
+            "AccessTokenParam",
+            parameter_name="/bedrock_bot/lambda/token/access",
+            string_value="dummy_access_token",  # ダミーの値で初期化
+        )
+
+        verify_token_param = ssm.StringParameter(
+            self,
+            "VerifyTokenParam",
+            parameter_name="/bedrock_bot/lambda/token/verify",
+            string_value="dummy_verify_token",  # ダミーの値で初期化
+        )
 
         lambda_api_function = lambda_python_alpha.PythonFunction(
             self,
@@ -35,8 +50,8 @@ class BedrockBotStack(Stack):
             runtime=lambda_.Runtime.PYTHON_3_12,
             timeout=Duration.seconds(10),
             environment={
-                "SLACK_BOT_USER_ACCESS_TOKEN": "/bedrock_bot/lambda/token/access",
-                "SLACK_BOT_VERIFY_TOKEN": "/bedrock_bot/lambda/token/verify",
+                "SLACK_BOT_USER_ACCESS_TOKEN": access_token_param.parameter_name,
+                "SLACK_BOT_VERIFY_TOKEN": verify_token_param.parameter_name,
                 "SQS_QUEUE_URL": queue.queue_url,  # SQSキューのURLを環境変数に追加
             },
         )
@@ -85,8 +100,8 @@ class BedrockBotStack(Stack):
             runtime=lambda_.Runtime.PYTHON_3_12,
             timeout=Duration.minutes(5),
             environment={
-                "SLACK_BOT_USER_ACCESS_TOKEN": "/bedrock_bot/lambda/token/access",
-                "SLACK_BOT_VERIFY_TOKEN": "/bedrock_bot/lambda/token/verify",
+                "SLACK_BOT_USER_ACCESS_TOKEN": access_token_param.parameter_name,
+                "SLACK_BOT_VERIFY_TOKEN": verify_token_param.parameter_name,
             },
         )
 
