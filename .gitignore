@@ -10,3 +10,4 @@ __pycache__
 cdk.out
 
 .envrc
+lambda_module/layer/*
