@@ -108,6 +108,4 @@ def create_layer(c):
     package_dir_name = "python"
     invoke_run(f"mkdir -p {package_path}/{package_dir_name}")
     invoke_run(f"pip install boto3 -t {package_path}/{package_dir_name}/")
-    invoke_run(f"cd {package_path}")
-    invoke_run(f"zip -r boto3_layer.zip {package_dir_name}")
-    invoke_run("cd ../../../..")
+    invoke_run(f"cd {package_path} && zip -r boto3_layer.zip {package_dir_name}")
