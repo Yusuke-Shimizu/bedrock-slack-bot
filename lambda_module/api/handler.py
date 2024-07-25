@@ -59,6 +59,7 @@ def is_app_mention(event):
 def has_slack_retry_header(event):
     headers = event.get("headers", {})
     if "x-slack-retry-num" in headers:
+        print(f"Retry header found: {headers['x-slack-retry-num']}")
         return True
     return False
 
