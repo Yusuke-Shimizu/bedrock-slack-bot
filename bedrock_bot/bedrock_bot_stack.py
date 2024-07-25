@@ -26,6 +26,7 @@ class BedrockBotStack(Stack):
                 300
             ),  # メッセージの可視性タイムアウトを設定
         )
+
         # SSMパラメータストアの作成
         access_token_param = ssm.StringParameter(
             self,
@@ -55,6 +56,11 @@ class BedrockBotStack(Stack):
                 "SQS_QUEUE_URL": queue.queue_url,  # SQSキューのURLを環境変数に追加
             },
         )
+
+        # access_token_paramとverify_token_paramに対してポリシーを設定
+        access_token_param.grant_read(lambda_api_function)
+        verify_token_param.grant_read(lambda_api_function)
+
         # IAM policy statement for Bedrock
         bedrock_policy_statement = iam.PolicyStatement(
             actions=["bedrock:InvokeModel"],
@@ -62,14 +68,8 @@ class BedrockBotStack(Stack):
                 "arn:aws:bedrock:us-east-1::foundation-model/anthropic.claude-3-5-sonnet-20240620-v1:0",
             ],
         )
-        # IAM policy statement for SSM
-        ssm_policy_statement = iam.PolicyStatement(
-            actions=["ssm:GetParameter"],
-            resources=["*"],
-        )
         # Attach the policies to the lambda function
         lambda_api_function.add_to_role_policy(bedrock_policy_statement)
-        lambda_api_function.add_to_role_policy(ssm_policy_statement)
 
         # API Gateway with Lambda Integration
         api = apigateway.LambdaRestApi(
@@ -113,5 +113,6 @@ class BedrockBotStack(Stack):
         sqs_lambda_function.add_event_source(sqs_event_source)
 
         # Attach the policies to the lambda function
+        access_token_param.grant_read(sqs_lambda_function)
+        verify_token_param.grant_read(sqs_lambda_function)
         sqs_lambda_function.add_to_role_policy(bedrock_policy_statement)
-        sqs_lambda_function.add_to_role_policy(ssm_policy_statement)
