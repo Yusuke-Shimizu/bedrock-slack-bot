@@ -100,3 +100,14 @@ def test(c):
 @invoke.task
 def test_unit(c):
     invoke_run("pytest -v tests/unit")
+
+
+@invoke.task
+def create_layer(c):
+    package_path = "lambda_module/layer/package"
+    package_dir_name = "python"
+    invoke_run(f"mkdir -p {package_path}/{package_dir_name}")
+    invoke_run(f"pip install boto3 -t {package_path}/{package_dir_name}/")
+    invoke_run(f"cd {package_path}")
+    invoke_run(f"zip -r boto3_layer.zip {package_dir_name}")
+    invoke_run("cd ../../../..")
