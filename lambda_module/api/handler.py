@@ -5,38 +5,6 @@ import urllib
 from botocore.exceptions import ClientError
 
 
-# def post_message_to_channel(channel, message, thread_ts=None):
-#     ssm = boto3.client("ssm")
-#     access_token = ssm.get_parameter(
-#         Name=os.environ["SLACK_BOT_USER_ACCESS_TOKEN"], WithDecryption=True
-#     )["Parameter"]["Value"]
-#     verify_token = ssm.get_parameter(
-#         Name=os.environ["SLACK_BOT_VERIFY_TOKEN"], WithDecryption=True
-#     )["Parameter"]["Value"]
-
-#     url = "https://slack.com/api/chat.postMessage"
-#     headers = {
-#         "Content-Type": "application/json; charset=UTF-8",
-#         "Authorization": f"Bearer {access_token}",
-#     }
-#     data = {
-#         "token": verify_token,
-#         "channel": channel,
-#         "text": message,
-#     }
-
-#     if thread_ts:
-#         data["thread_ts"] = thread_ts
-
-#     req = urllib.request.Request(
-#         url, data=json.dumps(data).encode("utf-8"), method="POST", headers=headers
-#     )
-#     res = urllib.request.urlopen(req)
-#     print(f"post result: {res.msg}")
-#     res_body = res.read().decode("utf-8")
-#     print(f"Response Body: {res_body}")
-
-
 def is_verify_token(event):
     ssm = boto3.client("ssm")
     verify_token = ssm.get_parameter(
@@ -72,11 +40,7 @@ def main(event, context):
     # イベントの内容をログに出力
     print("Received event:", event)
     body = json.loads(event.get("body", "{}"))
-    # user_id = body.get("event", {}).get("user", "不明なユーザー")
     text = body.get("event", {}).get("text", "")
-    # channel = body.get("event", {}).get("channel", "不明なチャンネル")
-    # thread_ts = body.get("event", {}).get("thread_ts", None)
-    # print(f"user_id={user_id}, text={text}, channel={channel}, thread_ts={thread_ts}")
 
     # Slackからのリクエストを解析
     if not body:
