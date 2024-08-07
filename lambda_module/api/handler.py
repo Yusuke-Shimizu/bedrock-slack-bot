@@ -58,8 +58,8 @@ def is_app_mention(event):
 # Slackリトライヘッダーが存在するか確認する関数
 def has_slack_retry_header(event):
     headers = event.get("headers", {})
-    if "x-slack-retry-num" in headers:
-        print(f"Retry header found: {headers['x-slack-retry-num']}")
+    if "X-Slack-Retry-Num" in headers:
+        print(f"Retry header found: {headers['X-Slack-Retry-Num']}")
         return True
     return False
 
