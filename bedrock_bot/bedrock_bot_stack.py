@@ -32,22 +32,36 @@ class BedrockBotStack(Stack):
             self,
             "AccessTokenParam",
             parameter_name="/bedrock_bot/lambda/token/access",
-            string_value="dummy_access_token",  # ダミーの値で初期化
+            string_value="dummy_access_token",
         )
 
         verify_token_param = ssm.StringParameter(
             self,
             "VerifyTokenParam",
             parameter_name="/bedrock_bot/lambda/token/verify",
-            string_value="dummy_verify_token",  # ダミーの値で初期化
+            string_value="dummy_verify_token",
+        )
+
+        flow_identifier_param = ssm.StringParameter(
+            self,
+            "FlowIdentifierParam",
+            parameter_name="/bedrock_bot/lambda/flow/identifier",
+            string_value="dummy",
+        )
+
+        flow_alias_identifier_param = ssm.StringParameter(
+            self,
+            "FlowAliasIdentifierParam",
+            parameter_name="/bedrock_bot/lambda/flow/alias_identifier",
+            string_value="dummy",
         )
 
         lambda_api_function = lambda_python_alpha.PythonFunction(
             self,
             "APILambda",
-            entry="lambda_module/api",  # Lambda コードが格納されているディレクトリへのパス
-            index="handler.py",  # ファイル名
-            handler="main",  # ハンドラ関数名
+            entry="lambda_module/api",
+            index="handler.py",
+            handler="main",
             runtime=lambda_.Runtime.PYTHON_3_12,
             timeout=Duration.seconds(10),
             environment={
@@ -63,9 +77,9 @@ class BedrockBotStack(Stack):
 
         # IAM policy statement for Bedrock
         bedrock_policy_statement = iam.PolicyStatement(
-            actions=["bedrock:InvokeModel"],
+            actions=["bedrock:InvokeFlow"],
             resources=[
-                "arn:aws:bedrock:us-east-1::foundation-model/anthropic.claude-3-5-sonnet-20240620-v1:0",
+                "arn:aws:bedrock:us-east-1:*:flow/*/alias/*",
             ],
         )
         # Attach the policies to the lambda function
@@ -76,7 +90,7 @@ class BedrockBotStack(Stack):
             self,
             "LambdaApi",
             handler=lambda_api_function,
-            proxy=False,  # プロキシを無効化
+            proxy=False,
         )
 
         # POST メソッドのみを許可するためのリソースとメソッドの設定
@@ -90,6 +104,29 @@ class BedrockBotStack(Stack):
         )
         lambda_api_function.add_to_role_policy(queue_policy_statement)
 
+        # Lambdaレイヤーの作成
+        # lambda_layer = lambda_python_alpha.PythonLayerVersion(
+        #     self,
+        #     "MyLayer",
+        #     entry="lambda_module/layer/package",  # パッケージが格納されているディレクトリへのパス
+        #     compatible_runtimes=[lambda_.Runtime.PYTHON_3_12],
+        # )
+        layer_asset = lambda_.Code.from_asset(path="lambda_module/layer/package")
+        lambda_layer = lambda_.LayerVersion(
+            self,
+            "Boto3Layer",
+            code=layer_asset,
+            compatible_runtimes=[lambda_.Runtime.PYTHON_3_12],
+            description="A layer to use boto3 in lambda",
+        )
+
+        # DLQの作成
+        dead_letter_queue = sqs.Queue(
+            self,
+            "DeadLetterQueue",
+            retention_period=Duration.days(1),
+        )
+
         # SQSから起動するLambda関数の追加
         sqs_lambda_function = lambda_python_alpha.PythonFunction(
             self,
@@ -102,7 +139,11 @@ class BedrockBotStack(Stack):
             environment={
                 "SLACK_BOT_USER_ACCESS_TOKEN": access_token_param.parameter_name,
                 "SLACK_BOT_VERIFY_TOKEN": verify_token_param.parameter_name,
+                "FLOW_IDENTIFIER": flow_identifier_param.parameter_name,
+                "FLOW_ALIAS_IDENTIFIER": flow_alias_identifier_param.parameter_name,
             },
+            layers=[lambda_layer],  # レイヤーを追加
+            dead_letter_queue=dead_letter_queue,
         )
 
         # SQSイベントソースをLambdaに接続
@@ -115,4 +156,6 @@ class BedrockBotStack(Stack):
         # Attach the policies to the lambda function
         access_token_param.grant_read(sqs_lambda_function)
         verify_token_param.grant_read(sqs_lambda_function)
+        flow_identifier_param.grant_read(sqs_lambda_function)
+        flow_alias_identifier_param.grant_read(sqs_lambda_function)
         sqs_lambda_function.add_to_role_policy(bedrock_policy_statement)

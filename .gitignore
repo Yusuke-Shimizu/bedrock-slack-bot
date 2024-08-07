@@ -11,3 +11,4 @@ cdk.out
 
 .envrc
 lambda_module/layer/*
+create_layer/*

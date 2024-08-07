@@ -2,6 +2,7 @@ import invoke
 import logging
 import os
 import boto3
+import shutil
 
 logger = logging.getLogger(__name__)
 fmt = "%(asctime)s %(levelname)s %(name)s :%(message)s"
@@ -106,6 +107,35 @@ def test_unit(c):
 def create_layer(c):
     package_path = "lambda_module/layer/package"
     package_dir_name = "python"
-    invoke_run(f"mkdir -p {package_path}/{package_dir_name}")
-    invoke_run(f"pip install boto3 -t {package_path}/{package_dir_name}/")
+    venv_dir = "create_layer"
+
+    # 仮想環境の作成
+    invoke_run(f"python3 -m venv {venv_dir}")
+    invoke_run(f"source {venv_dir}/bin/activate && pip install boto3")
+
+    # 必要なディレクトリ構造を作成
+    invoke_run(
+        f"mkdir -p {package_path}/{package_dir_name}/lib/python3.12/site-packages"
+    )
+    invoke_run(
+        f"cp -r {venv_dir}/lib/python3.12/site-packages/* {package_path}/{package_dir_name}/lib/python3.12/site-packages/"
+    )
+
+    # ZIPファイルの作成
     invoke_run(f"cd {package_path} && zip -r boto3_layer.zip {package_dir_name}")
+
+
+@invoke.task
+def clean_layer(c):
+    package_path = "lambda_module/layer/package"
+    venv_dir = "create_layer"
+
+    # 仮想環境の削除
+    if os.path.exists(venv_dir):
+        shutil.rmtree(venv_dir)
+        logging.info(f"仮想環境 {venv_dir} を削除しました")
+
+    # パッケージディレクトリの削除
+    if os.path.exists(package_path):
+        shutil.rmtree(package_path)
+        logging.info(f"パッケージディレクトリ {package_path} を削除しました")
