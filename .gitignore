@@ -10,5 +10,5 @@ __pycache__
 cdk.out
 
 .envrc
-lambda_module/layer/*
+lambda_module/layer/package/*
 create_layer/*

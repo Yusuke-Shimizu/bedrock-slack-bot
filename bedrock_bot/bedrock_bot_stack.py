@@ -105,19 +105,11 @@ class BedrockBotStack(Stack):
         lambda_api_function.add_to_role_policy(queue_policy_statement)
 
         # Lambdaレイヤーの作成
-        # lambda_layer = lambda_python_alpha.PythonLayerVersion(
-        #     self,
-        #     "MyLayer",
-        #     entry="lambda_module/layer/package",  # パッケージが格納されているディレクトリへのパス
-        #     compatible_runtimes=[lambda_.Runtime.PYTHON_3_12],
-        # )
-        layer_asset = lambda_.Code.from_asset(path="lambda_module/layer/package")
-        lambda_layer = lambda_.LayerVersion(
+        lambda_layer = lambda_python_alpha.PythonLayerVersion(
             self,
-            "Boto3Layer",
-            code=layer_asset,
+            "MyLayer",
+            entry="lambda_module/layer",
             compatible_runtimes=[lambda_.Runtime.PYTHON_3_12],
-            description="A layer to use boto3 in lambda",
         )
 
         # DLQの作成
