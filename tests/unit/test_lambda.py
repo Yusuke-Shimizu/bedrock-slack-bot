@@ -96,7 +96,7 @@ def test_is_not_app_mention():
 
 
 def test_has_slack_retry_header():
-    event = {"headers": {"x-slack-retry-num": "1"}}
+    event = {"headers": {"X-Slack-Retry-Num": "1"}}
     assert has_slack_retry_header(event) == True
 
 
