@@ -86,7 +86,6 @@ def main(event, context):
     except ClientError as e:
         error_message = f"Bedrock Flowの呼び出しに失敗しました: {str(e)}"
         print(error_message)
-        post_message_to_channel(channel, error_message, thread_ts)
         return {
             "statusCode": 500,
             "body": json.dumps({"message": error_message}),
