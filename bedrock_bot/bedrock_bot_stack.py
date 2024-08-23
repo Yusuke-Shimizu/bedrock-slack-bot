@@ -64,15 +64,14 @@ class BedrockBotStack(Stack):
             handler="main",
             runtime=lambda_.Runtime.PYTHON_3_12,
             timeout=Duration.seconds(10),
+            memory_size=256,
             environment={
-                "SLACK_BOT_USER_ACCESS_TOKEN": access_token_param.parameter_name,
                 "SLACK_BOT_VERIFY_TOKEN": verify_token_param.parameter_name,
                 "SQS_QUEUE_URL": queue.queue_url,  # SQSキューのURLを環境変数に追加
             },
         )
 
         # access_token_paramとverify_token_paramに対してポリシーを設定
-        access_token_param.grant_read(lambda_api_function)
         verify_token_param.grant_read(lambda_api_function)
 
         # IAM policy statement for Bedrock
